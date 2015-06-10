@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="R Pruim" />
+
+
+<title>How Git Works</title>
+
+<script src="HowGitWorks_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="HowGitWorks_files/bootstrap-3.3.1/css/bootstrap.min.css" rel="stylesheet" />
+<script src="HowGitWorks_files/bootstrap-3.3.1/js/bootstrap.min.js"></script>
+<script src="HowGitWorks_files/bootstrap-3.3.1/shim/html5shiv.min.js"></script>
+<script src="HowGitWorks_files/bootstrap-3.3.1/shim/respond.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="HowGitWorks_files/highlight/default.css"
+      type="text/css" />
+<script src="HowGitWorks_files/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img { 
+  max-width:100%; 
+  height: auto; 
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">How Git Works</h1>
+<h4 class="author"><em>R Pruim</em></h4>
+<h4 class="date"><em>June 2015</em></h4>
+</div>
+
+
+<p><a href="http://pcottle.github.io/learnGitBranching/"><a href="http://pcottle.github.io/learnGitBranching/" class="uri">http://pcottle.github.io/learnGitBranching/</a></a> provides an excellent set of tutorials and a visualization tool for learning about git.</p>
+<div id="the-basic-git-vocabulary" class="section level2">
+<h2>The basic git vocabulary</h2>
+<p><strong>local</strong> = on your machine</p>
+<p><strong>remote</strong> = <code>origin</code> = github</p>
+<ul>
+<li><p>This is all you need to know when you are getting started</p></li>
+<li>In general, a remote is some other place to which you synch (like github)
+<ul>
+<li>Remotes may be named anything, but the standard (default) name is <strong>origin</strong>. When you see <code>origin</code>, think github</li>
+<li>You could rename this to <code>github</code>, but since so much documentation out there uses <code>origin</code>, it’s probably easier to just leave as <code>origin</code>.</li>
+<li>In large projects, you may have multiple remotes (e.g., your github fork of some project and the original github project that you forked).<br /></li>
+<li>For small scale things stick with one remote and call it <code>origin</code>.</li>
+</ul></li>
+</ul>
+<p><strong>commit</strong> = n. snapshot of all files in the repository; v. to create a commit</p>
+<ul>
+<li>You can return to the state of any commit at any time.</li>
+<li>Each commit (except the initialization commit) has at least one predecessor.
+<ul>
+<li>Most have just one, <strong>merge commits</strong> have two.</li>
+<li>There is no record of changes made between commits</li>
+</ul></li>
+<li>Each commit has a <em>unique ID</em> (called its <strong>SHA</strong>) which is just a jibberish string</li>
+<li>Each commit has a <strong>message</strong> describing why it was created</li>
+<li>The chain of commits and their anscestors/descendants represent the history of your project.</li>
+<li><strong>Commits</strong> are cheap – better too many than too few.</li>
+</ul>
+<p><strong>stage</strong> = to mark files for the next commit</p>
+<ul>
+<li>These files are said to be in the <strong>staging area</strong>
+<ul>
+<li>Only changes to staged files are noticed when commiting.<br /></li>
+<li>Unstaged files that have changed will look (to the commit) like they did at the previous commit. This allows you to work on multiple files but stage them in as many or few commits as you like.</li>
+<li>Files that have never been committed are said to be <strong>untracked</strong> and are not part of the repository.</li>
+</ul></li>
+<li>command line: <code>git add</code></li>
+<li>most GUIs (e.g., RStudio) do this by selecting a checkbox</li>
+</ul>
+<p><strong>branch</strong> = (movable) pointer to a commit. * commits have nasty SHA names and don’t change * branches have nice human-readable names and move from commit to commit as work progresses</p>
+<p><strong>HEAD</strong> = the “current commit” or “current branch”</p>
+<ul>
+<li>The file system will look like <code>HEAD</code> plus any changes that have been made but not yet committed.</li>
+<li>If a new commit is made, it will be an immediate descendant of <code>HEAD</code> which will then be updated to point to the new commit.</li>
+<li>Usually <code>HEAD</code> points to a branch (the current branch).
+<ul>
+<li>When <code>HEAD</code> points to a commit instead, it is called a <strong>detached HEAD</strong></li>
+</ul></li>
+</ul>
+<p><strong>checkout</strong> = make a branch (or commit) the current branch (or commit)</p>
+<ul>
+<li>i.e., move <code>HEAD</code> there</li>
+<li>Checking out a commit can lead to a <strong>detached HEAD</strong></li>
+</ul>
+<p><strong>merge</strong> = combine the work from multiple branches</p>
+<ul>
+<li>merging an anscestor into a descendant does nothing – the descendant already has all of the history of the anscestor</li>
+<li>merging a descendant into an anscestor is called a <strong>fast-forward merge</strong>
+<ul>
+<li>the only change is that <code>anscestor</code> will now point to the same commit as <code>descendant</code></li>
+</ul></li>
+<li>other merges can potentially lead to <strong>conflicts</strong> that need resolving.
+<ul>
+<li>git will resolve conflicts when it can (for example when each file only changes on one of the two branches after their most recent common anscestor) and warn you to take inerventive measures when it cannot.</li>
+</ul></li>
+</ul>
+<p><strong>push</strong> = copy commits from local to remote</p>
+<p><strong>fetch</strong> = copy commits from remote to local</p>
+<p><strong>pull</strong> = <code>fetch</code> + <code>merge</code></p>
+</div>
+<div id="a-bit-more-vocabulary" class="section level2">
+<h2>A bit more vocabulary</h2>
+<p>You are less likely to need these, but it is good to know that they exist so you can hunt down how to use them when you get yourself into a bind.</p>
+<p><strong>rebase</strong> = replay commits along a different branch</p>
+<ul>
+<li>this is git’s version of revisionist history</li>
+<li>makes it look like work done in parallel was done sequentially</li>
+</ul>
+<p><strong>reset</strong> = move a branch backwad in time</p>
+<ul>
+<li>this makes it looks like some work was never done</li>
+<li>recent commits may be left <em>dangling</em></li>
+<li>not a good idea if you have already made the work public via <code>push</code></li>
+</ul>
+<p><strong>revert</strong> = “undo” by creating a new commit that has the same contents as a previous commit but a different history.</p>
+<ul>
+<li>This records the fact that something was done and then undone</li>
+</ul>
+<p><strong>cherry-pick</strong> = grab only certain commits and play them along a branch</p>
+<ul>
+<li>This can be handy if you are debugging and in the end only need some of the commits you tried to fix the problem.</li>
+</ul>
+</div>
+<div id="keys-to-success" class="section level2">
+<h2>Keys to success</h2>
+<ol style="list-style-type: decimal">
+<li><p>Learn the vocabulary above and how to visualize what is happening.</p></li>
+<li><p>Commit often (and use good commit messages).</p></li>
+<li><p>Pull often (to make sure you have everyone else’s latest and greatest).</p></li>
+<li><p>Communicate with team members.</p>
+<ul>
+<li>to avoid awkward merges</li>
+<li>to avoid redundant or counter-productive work</li>
+</ul></li>
+<li><p>Keep things as simple as works.</p></li>
+</ol>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
